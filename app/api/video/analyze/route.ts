@@ -11,7 +11,34 @@ interface KeyMoment {
     description: string
 }
 
+/**
+ * Video analysis endpoint
+ * Supports two modes:
+ * - useCV=false (default): Full video analysis with Gemini
+ * - useCV=true: CV pipeline (handled client-side, this just returns instructions)
+ */
 export async function POST(request: NextRequest) {
+    // Check if CV mode is requested
+    const url = new URL(request.url)
+    const useCV = url.searchParams.get('useCV') === 'true'
+
+    if (useCV) {
+        // CV mode: Return configuration for client-side pipeline
+        return NextResponse.json({
+            mode: 'cv',
+            message: 'Use client-side CV pipeline',
+            endpoints: {
+                vision: '/api/vision/analyze',
+                transcribe: '/api/audio/transcribe',
+                polish: '/api/recipe/polish'
+            },
+            config: {
+                enableVisionAPI: !!process.env.GOOGLE_CLOUD_VISION_KEY,
+                enableWhisper: !!process.env.OPENAI_API_KEY,
+                enablePolish: !!process.env.GEMINI_API_KEY
+            }
+        })
+    }
     try {
         const apiKey = process.env.GEMINI_API_KEY
         console.log('GEMINI_API_KEY configured:', apiKey ? `Yes (starts with ${apiKey.substring(0, 10)}...)` : 'No')

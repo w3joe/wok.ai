@@ -21,8 +21,11 @@ import {
     Video,
     CheckCircle2,
     Upload,
-    Camera
+    Camera,
+    Cpu,
+    Sparkles
 } from 'lucide-react'
+import { runFullCVPipeline, CVPipelineProgress } from '@/lib/cv/pipeline'
 
 interface KeyMoment {
     timestamp: number
@@ -55,6 +58,7 @@ interface RecipeData {
 
 type RecordingStep = 'setup' | 'transcribe' | 'analyzing' | 'review' | 'published'
 type InputMode = 'record' | 'upload'
+type AnalysisMode = 'gemini' | 'cv'
 
 const LANGUAGES = [
     { code: 'en', name: 'English' },
@@ -69,6 +73,7 @@ export default function RecordVideoPage() {
     const router = useRouter()
     const [step, setStep] = useState<RecordingStep>('setup')
     const [inputMode, setInputMode] = useState<InputMode>('upload')
+    const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('gemini')
     const [language, setLanguage] = useState('en')
     const [videoBlob, setVideoBlob] = useState<Blob | null>(null)
     const [videoUrl, setVideoUrl] = useState<string | null>(null)
@@ -80,6 +85,8 @@ export default function RecordVideoPage() {
 
     const [isAnalyzing, setIsAnalyzing] = useState(false)
     const [analysisProgress, setAnalysisProgress] = useState('')
+    const [cvStage, setCvStage] = useState<string>('')
+    const [cvProgress, setCvProgress] = useState(0)
     const [error, setError] = useState<string | null>(null)
 
     const handleVideoReady = useCallback((blob: Blob, url: string) => {
@@ -155,6 +162,85 @@ export default function RecordVideoPage() {
             setAnalysisProgress('')
         }
     }, [language, videoBlob])
+
+    // CV Pipeline analysis
+    const handleCVAnalyze = useCallback(async () => {
+        if (!videoBlob) {
+            setError('No video available')
+            return
+        }
+
+        setStep('analyzing')
+        setIsAnalyzing(true)
+        setError(null)
+        setCvStage('Initializing CV pipeline...')
+        setCvProgress(0)
+
+        try {
+            const handleProgress = (progress: CVPipelineProgress) => {
+                setCvStage(progress.message)
+                setCvProgress(progress.progress)
+                setAnalysisProgress(`${progress.stage}: ${progress.message}`)
+            }
+
+            const result = await runFullCVPipeline(videoBlob, {
+                enableActionRecognition: true,
+                enableVisionAPI: true,
+                onProgress: handleProgress
+            })
+
+            // Convert assembled recipe to RecipeData format
+            setRecipe({
+                title: result.title,
+                ingredients: result.ingredients,
+                steps: result.steps.map(s => s.instruction),
+                timing: result.timing,
+                techniques: result.techniques
+            })
+
+            // Build transcript from step descriptions
+            const transcriptText = result.steps
+                .map((s, i) => `Step ${i + 1}: ${s.description}`)
+                .join('\n\n')
+            setTranscript(transcriptText)
+
+            // Convert keyframes to extracted frames
+            setExtractedFrames(result.keyframes.map((kf, i) => ({
+                timestamp: kf.timestamp,
+                url: kf.dataUrl,
+                label: `Scene ${i + 1}`,
+                type: 'general'
+            })))
+
+            // Generate key moments from scenes
+            setKeyMoments(result.keyframes.map((kf, i) => ({
+                timestamp: kf.timestamp,
+                type: 'general' as const,
+                label: result.steps[i]?.instruction || `Scene ${i + 1}`,
+                description: result.steps[i]?.description || ''
+            })))
+
+            setStep('review')
+        } catch (err) {
+            console.error('CV analysis error:', err)
+            setError(err instanceof Error ? err.message : 'CV pipeline failed')
+            setStep('transcribe')
+        } finally {
+            setIsAnalyzing(false)
+            setAnalysisProgress('')
+            setCvStage('')
+            setCvProgress(0)
+        }
+    }, [videoBlob])
+
+    // Wrapper to choose analysis method
+    const handleAnalyze = useCallback(async () => {
+        if (analysisMode === 'cv') {
+            await handleCVAnalyze()
+        } else {
+            await handleAnalyzeVideo()
+        }
+    }, [analysisMode, handleCVAnalyze, handleAnalyzeVideo])
 
     // Extract frames from video using canvas
     const extractFramesFromVideo = async (
@@ -364,7 +450,42 @@ export default function RecordVideoPage() {
                             </CardContent>
                         </Card>
 
-
+                        {/* Analysis Mode */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Cpu className="h-5 w-5" />
+                                    Analysis Mode
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Button
+                                        variant={analysisMode === 'gemini' ? 'default' : 'outline'}
+                                        onClick={() => setAnalysisMode('gemini')}
+                                        className="h-24 flex-col gap-2"
+                                    >
+                                        <Sparkles className="h-6 w-6" />
+                                        <span>Gemini AI</span>
+                                        <span className="text-xs opacity-70">Full LLM analysis</span>
+                                    </Button>
+                                    <Button
+                                        variant={analysisMode === 'cv' ? 'default' : 'outline'}
+                                        onClick={() => setAnalysisMode('cv')}
+                                        className="h-24 flex-col gap-2"
+                                    >
+                                        <Cpu className="h-6 w-6" />
+                                        <span>CV Pipeline</span>
+                                        <span className="text-xs opacity-70">Minimal LLM usage</span>
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-3 text-center">
+                                    {analysisMode === 'gemini'
+                                        ? 'Uses Gemini 2.5 Flash for full video understanding'
+                                        : 'Uses computer vision for scene detection, Vision API for objects, and Whisper for transcription'}
+                                </p>
+                            </CardContent>
+                        </Card>
 
                         {/* Conditional: Upload or Record */}
                         {inputMode === 'upload' ? (
@@ -381,11 +502,11 @@ export default function RecordVideoPage() {
                     </div>
                 )}
 
-                {/* Step: Analyze with Gemini */}
+                {/* Step: Analyze with Gemini or CV */}
                 {step === 'transcribe' && (
                     <VideoAnalyzer
                         videoUrl={videoUrl}
-                        onAnalyze={handleAnalyzeVideo}
+                        onAnalyze={handleAnalyze}
                         isAnalyzing={isAnalyzing}
                         analysisProgress={analysisProgress}
                     />
@@ -396,13 +517,42 @@ export default function RecordVideoPage() {
                     <Card>
                         <CardContent className="flex flex-col items-center gap-4 py-12">
                             <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                            <p className="text-lg font-medium">Analyzing Your Video</p>
-                            <p className="text-muted-foreground">{analysisProgress}</p>
+                            <p className="text-lg font-medium">
+                                {analysisMode === 'cv' ? 'Running CV Pipeline' : 'Analyzing Your Video'}
+                            </p>
+                            <p className="text-muted-foreground">{analysisProgress || cvStage}</p>
+
+                            {analysisMode === 'cv' && cvProgress > 0 && (
+                                <div className="w-full max-w-xs">
+                                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-primary transition-all duration-300"
+                                            style={{ width: `${cvProgress * 100}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1 text-center">
+                                        {Math.round(cvProgress * 100)}%
+                                    </p>
+                                </div>
+                            )}
+
                             <div className="text-sm text-muted-foreground space-y-1 text-center">
-                                <p>• Transcribing your narration</p>
-                                <p>• Identifying key cooking moments</p>
-                                <p>• Extracting photos at critical points</p>
-                                <p>• Generating labels and structure</p>
+                                {analysisMode === 'cv' ? (
+                                    <>
+                                        <p>• Detecting scene changes</p>
+                                        <p>• Analyzing keyframes with Vision API</p>
+                                        <p>• Recognizing cooking actions</p>
+                                        <p>• Transcribing with Whisper</p>
+                                        <p>• Assembling recipe structure</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p>• Transcribing your narration</p>
+                                        <p>• Identifying key cooking moments</p>
+                                        <p>• Extracting photos at critical points</p>
+                                        <p>• Generating labels and structure</p>
+                                    </>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
