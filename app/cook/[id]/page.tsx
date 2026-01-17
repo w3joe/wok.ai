@@ -12,17 +12,44 @@ import { TimerManager, Timer } from '@/lib/timer-manager'
 import { ChefHat, ChevronLeft, ChevronRight, Clock, Check } from 'lucide-react'
 import { Header } from '@/components/Header'
 
+interface RecipeStep {
+  instruction: string
+  description: string
+}
+
 interface Recipe {
   id: string
   title: string
   ingredients: string[]
-  steps: string[]
+  steps: (string | RecipeStep)[]
   timing?: {
     prep?: number
     cook?: number
     total?: number
   }
   techniques?: string[]
+}
+
+// Helper functions to handle both old string format and new object format
+function getStepInstruction(step: string | RecipeStep): string {
+  if (typeof step === 'string') {
+    return step
+  }
+  return step.instruction
+}
+
+function getStepDescription(step: string | RecipeStep): string | null {
+  if (typeof step === 'string') {
+    return null
+  }
+  return step.description
+}
+
+function getStepFullText(step: string | RecipeStep): string {
+  if (typeof step === 'string') {
+    return step
+  }
+  return `${step.instruction}. ${step.description}`
 }
 
 export default function CookPage({ params }: { params: Promise<{ id: string }> }) {
@@ -109,7 +136,7 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
       // We check if it's not active to avoid double-voicing
       if ('speechSynthesis' in window && !document.querySelector('[data-assistant-active="true"]')) {
         const utterance = new SpeechSynthesisUtterance(
-          `Step ${newStep + 1}: ${recipe.steps[newStep]}`
+          `Step ${newStep + 1}: ${getStepFullText(recipe.steps[newStep])}`
         )
         speechSynthesis.speak(utterance)
       }
@@ -151,9 +178,9 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">{recipe.title}</h1>
+      <main className="container mx-auto px-4 py-8 max-w-5xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold mb-3">{recipe.title}</h1>
           <div className="flex gap-2">
             {recipe.timing && (
               <Badge variant="secondary">
@@ -170,9 +197,9 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             {/* Current Step */}
-            <Card id="current-step-card" className="border-2 border-primary scroll-mt-24">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+            <Card id="current-step-card" className="border-primary scroll-mt-24">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center justify-between">
                   <span>Step {currentStep + 1} of {recipe.steps.length}</span>
                   <Button
                     variant="ghost"
@@ -188,10 +215,16 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-xl leading-relaxed">{recipe.steps[currentStep]}</p>
+                <p className="text-lg leading-relaxed">
+                  {getStepInstruction(recipe.steps[currentStep])}
+                </p>
+                {getStepDescription(recipe.steps[currentStep]) && (
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+                    {getStepDescription(recipe.steps[currentStep])}
+                  </p>
+                )}
 
-
-                <div className="flex gap-3 mt-6">
+                <div className="flex gap-2 mt-4">
                   <Button
                     onClick={() => handleStepChange(currentStep - 1)}
                     disabled={currentStep === 0}
@@ -214,8 +247,8 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
 
             {/* All Steps */}
             <Card>
-              <CardHeader>
-                <CardTitle>All Steps</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">All Steps</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
@@ -224,23 +257,28 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
                       key={idx}
                       onClick={() => handleStepChange(idx)}
                       className={`flex gap-3 p-3 rounded-lg cursor-pointer transition-colors ${idx === currentStep
-                        ? 'bg-primary/10 border-2 border-primary'
-                        : 'bg-muted hover:bg-muted/70'
+                        ? 'bg-primary/10 border border-primary'
+                        : 'bg-muted/50 hover:bg-muted'
                         }`}
                     >
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-semibold ${completedSteps.has(idx)
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-background text-foreground'
-                            }`}
-                        >
-                          {completedSteps.has(idx) ? <Check className="h-4 w-4" /> : idx + 1}
-                        </span>
+                      <span
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${completedSteps.has(idx)
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-background text-foreground border'
+                          }`}
+                      >
+                        {completedSteps.has(idx) ? <Check className="h-3 w-3" /> : idx + 1}
+                      </span>
+                      <div>
+                        <p className={`text-sm ${idx === currentStep ? 'font-medium' : ''}`}>
+                          {getStepInstruction(step)}
+                        </p>
+                        {getStepDescription(step) && (
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                            {getStepDescription(step)}
+                          </p>
+                        )}
                       </div>
-                      <p className={`pt-1 text-sm ${idx === currentStep ? 'font-semibold' : ''}`}>
-                        {step}
-                      </p>
                     </div>
                   ))}
                 </div>
@@ -268,8 +306,8 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
 
             {/* Ingredients */}
             <Card>
-              <CardHeader>
-                <CardTitle>Ingredients</CardTitle>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Ingredients</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
@@ -286,8 +324,8 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
             {/* Techniques */}
             {recipe.techniques && recipe.techniques.length > 0 && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Techniques</CardTitle>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Techniques</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">

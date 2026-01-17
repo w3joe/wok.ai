@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
         const promptText = `You are an expert chef analyzing a cooking video. Watch this video and:
 1. Transcribe what is being said (narration or instructions).
    - IMPORTANT: IGNORE background music, lyrics, or random noise. Only transcribe speech related to the cooking or recipe instructions.
+   - CAPTURE all tips, warnings, and key pointers the chef mentions
 2. Describe what's happening visually
 3. Extract a complete recipe with ingredients, steps, timing, and techniques
 
@@ -65,13 +66,31 @@ Return your analysis as a JSON object (no markdown code blocks):
   "recipe": {
     "title": "Name of the dish",
     "ingredients": ["ingredient 1 with quantity", "ingredient 2", ...],
-    "steps": ["Step 1: detailed instruction", "Step 2: detailed instruction", ...],
+    "steps": [
+      { "instruction": "Brief action instruction", "description": "Detailed tips, techniques, and chef's pointers" },
+      ...
+    ],
     "timing": { "prep": 10, "cook": 20, "total": 30 },
     "techniques": ["technique 1", "technique 2", ...]
   },
   "keyMoments": [
     { "timestamp": 5, "type": "ingredient|technique|doneness|general", "label": "Short label", "description": "What's happening" }
   ]
+}
+
+IMPORTANT - Step formatting guidelines:
+- "instruction": A brief, actionable instruction (e.g., "Heat oil in wok over high heat")
+- "description": Detailed tips, warnings, sensory cues, and chef's pointers for this step. Include:
+  - Tips and warnings (e.g., "be careful not to overcook", "you'll know it's ready when...")
+  - Sensory cues observed visually or mentioned (e.g., "until golden brown", "when it starts to sizzle")
+  - Timing hints (e.g., "about 2 minutes", "let it rest for 5 minutes")
+  - WHY something is done a certain way if the chef explains it
+  - Combine visual observations with spoken instructions for richer descriptions
+
+Example step:
+{
+  "instruction": "Heat oil in wok until smoking",
+  "description": "Use high heat and wait until the oil shimmers and just barely starts to smoke - this is crucial for getting that restaurant-style sear. The wok should be very hot before adding ingredients."
 }
 
 Be thorough in your analysis. Return ONLY the JSON object.`
@@ -148,7 +167,7 @@ Be thorough in your analysis. Return ONLY the JSON object.`
             analysisResult.recipe = {
                 title: 'Analyzed Recipe',
                 ingredients: [],
-                steps: ['See transcript for details'],
+                steps: [{ instruction: 'See transcript for details', description: '' }],
                 timing: { prep: 10, cook: 20, total: 30 },
                 techniques: []
             }

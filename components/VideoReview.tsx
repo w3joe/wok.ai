@@ -35,10 +35,15 @@ interface ExtractedFrame {
     notes?: string
 }
 
+interface RecipeStep {
+    instruction: string
+    description: string
+}
+
 interface RecipeData {
     title: string
     ingredients: string[]
-    steps: string[]
+    steps: (string | RecipeStep)[]
     timing?: {
         prep?: number
         cook?: number
@@ -47,7 +52,15 @@ interface RecipeData {
     techniques?: string[]
 }
 
+function getStepInstruction(step: string | RecipeStep): string {
+    if (typeof step === 'string') return step
+    return step.instruction
+}
 
+function getStepDescription(step: string | RecipeStep): string {
+    if (typeof step === 'string') return ''
+    return step.description || ''
+}
 
 interface VideoReviewProps {
     recipe: RecipeData
@@ -88,13 +101,6 @@ export function VideoReview({
         }
     }
 
-    const updateFrameLabel = (index: number, newLabel: string) => {
-        const updatedFrames = [...frames]
-        updatedFrames[index] = { ...updatedFrames[index], label: newLabel }
-        onFramesUpdate(updatedFrames)
-        setEditingFrameIndex(null)
-    }
-
     const updateFrameNotes = (index: number, notes: string) => {
         const updatedFrames = [...frames]
         updatedFrames[index] = { ...updatedFrames[index], notes }
@@ -105,15 +111,6 @@ export function VideoReview({
         const mins = Math.floor(seconds / 60)
         const secs = Math.floor(seconds % 60)
         return `${mins}:${secs.toString().padStart(2, '0')}`
-    }
-
-    const getTypeColor = (type: string) => {
-        switch (type) {
-            case 'ingredient': return 'bg-green-100 text-green-800 border-green-200'
-            case 'technique': return 'bg-blue-100 text-blue-800 border-blue-200'
-            case 'doneness': return 'bg-orange-100 text-orange-800 border-orange-200'
-            default: return 'bg-gray-100 text-gray-800 border-gray-200'
-        }
     }
 
     return (
@@ -128,21 +125,20 @@ export function VideoReview({
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => onRecipeUpdate({ ...recipe, title: e.target.value })}
                                 onBlur={() => setEditingTitle(false)}
                                 onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === 'Enter' && setEditingTitle(false)}
-                                className="text-2xl font-bold"
+                                className="text-xl font-semibold"
                                 autoFocus
                             />
                         ) : (
                             <CardTitle
-                                className="text-3xl cursor-pointer hover:text-primary flex items-center gap-2"
+                                className="text-xl cursor-pointer hover:text-primary flex items-center gap-2"
                                 onClick={() => setEditingTitle(true)}
                             >
                                 {recipe.title}
-                                <Edit2 className="h-4 w-4 opacity-50" />
+                                <Edit2 className="h-4 w-4 opacity-40" />
                             </CardTitle>
                         )}
                     </div>
                     <div className="flex gap-2 pt-2 flex-wrap">
-
                         {recipe.timing && (
                             <Badge variant="secondary">
                                 <Clock className="mr-1 h-3 w-3" />
@@ -159,11 +155,11 @@ export function VideoReview({
                 </CardHeader>
             </Card>
 
-            {/* Video Player with Timeline */}
+            {/* Video Player */}
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Play className="h-5 w-5" />
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <Play className="h-4 w-4" />
                         Video Preview
                     </CardTitle>
                 </CardHeader>
@@ -176,17 +172,12 @@ export function VideoReview({
                         />
                     </div>
 
-                    {/* Timeline Markers */}
                     {keyMoments.length > 0 && (
                         <div className="space-y-2">
                             <p className="text-sm font-medium">Key Moments</p>
                             <div className="flex flex-wrap gap-2">
                                 {keyMoments.map((moment, idx) => (
-                                    <Badge
-                                        key={idx}
-                                        variant="outline"
-                                        className={`cursor-pointer ${getTypeColor(moment.type)}`}
-                                    >
+                                    <Badge key={idx} variant="outline">
                                         {formatTime(moment.timestamp)} - {moment.label}
                                     </Badge>
                                 ))}
@@ -196,12 +187,12 @@ export function VideoReview({
                 </CardContent>
             </Card>
 
-            {/* Extracted Frames Gallery */}
+            {/* Extracted Frames */}
             {frames.length > 0 && (
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <ImageIcon className="h-5 w-5" />
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2">
+                            <ImageIcon className="h-4 w-4" />
                             Extracted Photos ({frames.length})
                         </CardTitle>
                     </CardHeader>
@@ -209,20 +200,17 @@ export function VideoReview({
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {frames.map((frame, idx) => (
                                 <div key={idx} className="space-y-2">
-                                    <div className="aspect-video bg-muted rounded-lg overflow-hidden relative group">
+                                    <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
                                         <img
                                             src={frame.url}
                                             alt={frame.label}
                                             className="w-full h-full object-cover"
                                         />
-                                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                                            <Badge className={`text-xs ${getTypeColor(frame.type)}`}>
-                                                {formatTime(frame.timestamp)}
-                                            </Badge>
-                                        </div>
+                                        <Badge className="absolute bottom-2 left-2" variant="secondary">
+                                            {formatTime(frame.timestamp)}
+                                        </Badge>
                                     </div>
 
-                                    {/* Editable Label */}
                                     {editingFrameIndex === idx ? (
                                         <Input
                                             value={frame.label}
@@ -242,11 +230,10 @@ export function VideoReview({
                                             onClick={() => setEditingFrameIndex(idx)}
                                         >
                                             {frame.label}
-                                            <Edit2 className="h-3 w-3 opacity-50" />
+                                            <Edit2 className="h-3 w-3 opacity-40" />
                                         </p>
                                     )}
 
-                                    {/* Notes */}
                                     <Input
                                         value={frame.notes || ''}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => updateFrameNotes(idx, e.target.value)}
@@ -262,8 +249,8 @@ export function VideoReview({
 
             {/* Ingredients */}
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Ingredients</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <CardTitle className="text-base">Ingredients</CardTitle>
                     <Button
                         variant="ghost"
                         size="sm"
@@ -272,17 +259,15 @@ export function VideoReview({
                             onRecipeUpdate({ ...recipe, ingredients: newIngredients })
                         }}
                     >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Ingredient
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add
                     </Button>
                 </CardHeader>
                 <CardContent>
-                    <ul className="space-y-3">
+                    <ul className="space-y-2">
                         {recipe.ingredients.map((ingredient, idx) => (
                             <li key={idx} className="flex items-center gap-2">
-                                <div className="h-4 w-4 shrink-0 mt-1">
-                                    <Check className="h-4 w-4 text-primary" />
-                                </div>
+                                <Check className="h-4 w-4 text-primary shrink-0" />
                                 <Input
                                     value={ingredient}
                                     onChange={(e) => {
@@ -290,18 +275,19 @@ export function VideoReview({
                                         newIngredients[idx] = e.target.value
                                         onRecipeUpdate({ ...recipe, ingredients: newIngredients })
                                     }}
-                                    placeholder="Ingredient amount and name"
+                                    placeholder="Ingredient"
                                     className="flex-1"
                                 />
                                 <Button
                                     variant="ghost"
                                     size="icon"
+                                    className="h-8 w-8"
                                     onClick={() => {
                                         const newIngredients = recipe.ingredients.filter((_, i) => i !== idx)
                                         onRecipeUpdate({ ...recipe, ingredients: newIngredients })
                                     }}
                                 >
-                                    <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                             </li>
                         ))}
@@ -311,47 +297,67 @@ export function VideoReview({
 
             {/* Steps */}
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Instructions</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <CardTitle className="text-base">Instructions</CardTitle>
                     <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                            const newSteps = [...recipe.steps, '']
+                            const newStep: RecipeStep = { instruction: '', description: '' }
+                            const newSteps = [...recipe.steps, newStep]
                             onRecipeUpdate({ ...recipe, steps: newSteps })
                         }}
                     >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Step
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add
                     </Button>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         {recipe.steps.map((step, idx) => (
                             <div key={idx} className="flex gap-3">
-                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground font-semibold mt-1">
+                                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-medium">
                                     {idx + 1}
                                 </span>
-                                <Textarea
-                                    value={step}
-                                    onChange={(e) => {
-                                        const newSteps = [...recipe.steps]
-                                        newSteps[idx] = e.target.value
-                                        onRecipeUpdate({ ...recipe, steps: newSteps })
-                                    }}
-                                    placeholder={`Step ${idx + 1} instructions...`}
-                                    className="flex-1 min-h-[80px]"
-                                />
+                                <div className="flex-1 space-y-2">
+                                    <Input
+                                        value={getStepInstruction(step)}
+                                        onChange={(e) => {
+                                            const newSteps = [...recipe.steps]
+                                            const currentStep = typeof step === 'string'
+                                                ? { instruction: step, description: '' }
+                                                : { ...step }
+                                            currentStep.instruction = e.target.value
+                                            newSteps[idx] = currentStep
+                                            onRecipeUpdate({ ...recipe, steps: newSteps })
+                                        }}
+                                        placeholder={`Step ${idx + 1}...`}
+                                    />
+                                    <Textarea
+                                        value={getStepDescription(step)}
+                                        onChange={(e) => {
+                                            const newSteps = [...recipe.steps]
+                                            const currentStep = typeof step === 'string'
+                                                ? { instruction: step, description: '' }
+                                                : { ...step }
+                                            currentStep.description = e.target.value
+                                            newSteps[idx] = currentStep
+                                            onRecipeUpdate({ ...recipe, steps: newSteps })
+                                        }}
+                                        placeholder="Additional tips..."
+                                        className="min-h-[60px] text-sm"
+                                    />
+                                </div>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="mt-1"
+                                    className="h-8 w-8"
                                     onClick={() => {
                                         const newSteps = recipe.steps.filter((_, i) => i !== idx)
                                         onRecipeUpdate({ ...recipe, steps: newSteps })
                                     }}
                                 >
-                                    <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                             </div>
                         ))}
@@ -361,30 +367,28 @@ export function VideoReview({
 
             {/* Transcript */}
             <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle
-                            className="flex items-center gap-2 cursor-pointer"
-                            onClick={() => setShowTranscript(!showTranscript)}
-                        >
-                            <FileText className="h-5 w-5" />
-                            Original Transcript
-                            <Badge variant="outline" className="ml-2">
-                                {showTranscript ? 'Hide' : 'Show'}
-                            </Badge>
-                        </CardTitle>
-                    </div>
+                <CardHeader className="pb-3">
+                    <CardTitle
+                        className="text-base flex items-center gap-2 cursor-pointer"
+                        onClick={() => setShowTranscript(!showTranscript)}
+                    >
+                        <FileText className="h-4 w-4" />
+                        Original Transcript
+                        <Badge variant="outline" className="ml-auto text-xs">
+                            {showTranscript ? 'Hide' : 'Show'}
+                        </Badge>
+                    </CardTitle>
                 </CardHeader>
                 {showTranscript && (
                     <CardContent>
                         <Textarea
                             value={transcript}
                             onChange={(e) => onTranscriptUpdate(e.target.value)}
-                            className="min-h-[200px] font-mono text-sm leading-relaxed"
-                            placeholder=" Transcript will appear here..."
+                            className="min-h-[150px] font-mono text-sm"
+                            placeholder="Transcript..."
                         />
                         <p className="text-xs text-muted-foreground mt-2">
-                            You can edit any errors in the AI transcription here.
+                            Edit any transcription errors here.
                         </p>
                     </CardContent>
                 )}
@@ -393,8 +397,8 @@ export function VideoReview({
             {/* Techniques */}
             {recipe.techniques && recipe.techniques.length > 0 && (
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Techniques</CardTitle>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Techniques</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-wrap gap-2">
@@ -408,12 +412,11 @@ export function VideoReview({
                 </Card>
             )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-4">
+            {/* Actions */}
+            <div className="flex gap-3 pt-4 border-t">
                 <Button
                     onClick={handlePublish}
                     disabled={isPublishing}
-                    size="lg"
                     className="flex-1"
                 >
                     {isPublishing ? (
@@ -432,7 +435,6 @@ export function VideoReview({
                     onClick={onStartOver}
                     disabled={isPublishing}
                     variant="outline"
-                    size="lg"
                 >
                     Start Over
                 </Button>

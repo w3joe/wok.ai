@@ -9,15 +9,10 @@ import { Button } from '@/components/ui/button'
 import {
     ChefHat,
     Clock,
-    Loader2,
     Search,
     Mic,
     MicOff,
-    Filter,
-    ArrowUpDown,
-    Sparkles,
-    Utensils,
-    Flame
+    ArrowUpDown
 } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { RecipeCardSkeleton } from '@/components/RecipeCardSkeleton'
@@ -37,8 +32,6 @@ interface Recipe {
     cuisine_type?: string
     created_at: string
 }
-
-
 
 export default function RecipesPage() {
     const [recipes, setRecipes] = useState<Recipe[]>([])
@@ -61,7 +54,6 @@ export default function RecipesPage() {
 
             let filtered = data.recipes || []
 
-            // Client-side sorting
             filtered.sort((a: Recipe, b: Recipe) => {
                 if (sortBy === 'newest') {
                     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -125,145 +117,115 @@ export default function RecipesPage() {
     }
 
     return (
-        <div className="min-h-screen bg-[#fafafa] dark:bg-background">
+        <div className="min-h-screen bg-background">
             <Header />
 
-            {/* Hero Section */}
-            <div className="bg-white dark:bg-card border-b relative overflow-hidden">
-                <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-3xl opacity-50" />
-                <div className="container mx-auto px-4 py-20 text-center relative">
-                    <Badge variant="outline" className="mb-6 px-4 py-1.5 text-xs font-black uppercase tracking-widest text-primary border-primary/20 bg-primary/5 shadow-sm">
-                        <Sparkles className="mr-2 h-3.5 w-3.5" />
-                        Culinary Archive
-                    </Badge>
-                    <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-8 bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-transparent leading-tight">
-                        Discover & Create
-                    </h1>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-12 italic leading-relaxed">
-                        Search through your voice-recorded recipes or find inspiration for your next masterpiece.
+            {/* Search Section */}
+            <div className="border-b">
+                <div className="container mx-auto px-4 py-12">
+                    <h1 className="text-3xl font-bold mb-2 text-center">Recipe Library</h1>
+                    <p className="text-muted-foreground text-center mb-8">
+                        Search your voice-recorded recipes
                     </p>
 
-                    <div className="max-w-2xl mx-auto relative group">
-                        <div className="absolute -inset-1.5 bg-gradient-to-r from-primary/30 to-primary/10 rounded-[2rem] blur opacity-25 group-focus-within:opacity-100 transition duration-1000 group-focus-within:duration-200"></div>
-                        <div className="relative flex items-center bg-white dark:bg-background border-2 shadow-xl rounded-[1.5rem] p-2 focus-within:ring-4 ring-primary/10 transition-all">
-                            <Search className="ml-4 h-6 w-6 text-muted-foreground" />
+                    <div className="max-w-xl mx-auto">
+                        <div className="flex items-center gap-2 border rounded-lg p-2 bg-background">
+                            <Search className="ml-2 h-5 w-5 text-muted-foreground" />
                             <Input
-                                placeholder="Search recipes by name, ingredients, or techniques..."
+                                placeholder="Search recipes..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="border-0 focus-visible:ring-0 text-lg py-7 h-14 bg-transparent font-medium"
+                                className="border-0 focus-visible:ring-0"
                             />
                             <Button
                                 size="icon"
                                 variant={isListening ? "destructive" : "secondary"}
-                                className={`rounded-xl h-12 w-12 transition-all shadow-sm ${isListening ? 'animate-pulse scale-110' : 'hover:scale-105'}`}
                                 onClick={toggleListening}
                             >
-                                {isListening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                             </Button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <main className="container mx-auto px-4 py-16">
-                <div className="max-w-6xl mx-auto">
-                    {/* Sorting */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-16 border-b pb-8">
+            <main className="container mx-auto px-4 py-8">
+                <div className="max-w-5xl mx-auto">
+                    {/* Header with count and sort */}
+                    <div className="flex items-center justify-between mb-6 pb-4 border-b">
                         <div className="flex items-center gap-2">
-                            <h2 className="text-3xl font-black">
+                            <h2 className="text-lg font-medium">
                                 {searchQuery ? `Results for "${searchQuery}"` : 'All Recipes'}
                             </h2>
-                            <Badge variant="secondary" className="rounded-full bg-primary/10 text-primary border-none font-bold">
-                                {recipes.length}
-                            </Badge>
+                            <Badge variant="secondary">{recipes.length}</Badge>
                         </div>
 
-                        <div className="flex items-center gap-4 bg-white dark:bg-card px-6 py-2.5 rounded-2xl border shadow-sm">
-                            <span className="text-xs font-black text-muted-foreground flex items-center gap-2 uppercase tracking-widest">
-                                <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
-                                Sort By
-                            </span>
+                        <div className="flex items-center gap-2 text-sm">
+                            <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                             <select
                                 value={sortBy}
                                 onChange={(e) => setSortBy(e.target.value as any)}
-                                className="bg-transparent text-sm border-none focus:ring-0 cursor-pointer font-bold text-foreground uppercase tracking-wider"
+                                className="bg-transparent border-none text-sm cursor-pointer"
                             >
-                                <option value="newest">Newest First</option>
-                                <option value="alphabetical">Title A-Z</option>
-                                <option value="time">Cooking Time</option>
+                                <option value="newest">Newest</option>
+                                <option value="alphabetical">A-Z</option>
+                                <option value="time">Cook Time</option>
                             </select>
                         </div>
                     </div>
 
                     {isLoading ? (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[1, 2, 3, 4, 5, 6].map((i) => (
                                 <RecipeCardSkeleton key={i} />
                             ))}
                         </div>
                     ) : recipes.length === 0 ? (
-                        <div className="text-center py-32 border-2 border-dashed rounded-[3rem] bg-white dark:bg-card shadow-inner">
-                            <div className="h-24 w-24 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
-                                <Utensils className="h-12 w-12 text-primary/40" />
-                            </div>
-                            <h3 className="text-2xl font-black mb-3">No recipes found</h3>
-                            <p className="text-muted-foreground mb-12 max-w-sm mx-auto italic leading-relaxed">
-                                We couldn't find any recipes matching your criteria. Try adjusting your search query.
+                        <div className="text-center py-16 border border-dashed rounded-lg">
+                            <ChefHat className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                            <h3 className="text-lg font-medium mb-2">No recipes found</h3>
+                            <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
+                                Try adjusting your search or record a new recipe.
                             </p>
                             <Link href="/record">
-                                <Button size="lg" className="rounded-2xl h-14 px-10 text-lg font-black shadow-xl shadow-primary/20 hover:scale-105 transition-all">
-                                    <Mic className="mr-3 h-5 w-5" />
-                                    Record New Recipe
+                                <Button>
+                                    <Mic className="mr-2 h-4 w-4" />
+                                    Record Recipe
                                 </Button>
                             </Link>
                         </div>
                     ) : (
-                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {recipes.map((recipe) => (
                                 <Link key={recipe.id} href={`/cook/${recipe.id}`}>
-                                    <Card className="group h-full overflow-hidden border-border/50 hover:border-primary/50 hover:shadow-2xl transition-all duration-500 cursor-pointer rounded-[2rem] bg-white dark:bg-card">
+                                    <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer">
                                         <CardHeader className="p-0">
-                                            <div className="h-52 w-full bg-gradient-to-br from-primary/10 via-primary/5 to-transparent relative overflow-hidden">
-                                                <div className="absolute inset-0 flex items-center justify-center opacity-30 group-hover:opacity-50 group-hover:scale-110 transition-all duration-1000">
-                                                    <ChefHat className="h-28 w-28 text-primary" />
-                                                </div>
-                                                {recipe.difficulty && (
-                                                    <Badge className="absolute top-6 right-6 bg-white/95 dark:bg-black/80 backdrop-blur-md text-foreground border-none shadow-lg font-black uppercase text-[10px] tracking-widest px-3 py-1 scale-100 group-hover:scale-110 transition-transform">
-                                                        {recipe.difficulty}
-                                                    </Badge>
-                                                )}
+                                            <div className="h-40 w-full bg-muted flex items-center justify-center">
+                                                <ChefHat className="h-16 w-16 text-muted-foreground/30" />
                                             </div>
                                         </CardHeader>
-                                        <CardContent className="p-8">
-                                            <CardTitle className="text-2xl font-black mb-4 line-clamp-2 group-hover:text-primary transition-colors leading-tight">
+                                        <CardContent className="p-4">
+                                            <CardTitle className="text-lg mb-3 line-clamp-2">
                                                 {recipe.title}
                                             </CardTitle>
 
-                                            <div className="flex items-center gap-5 text-sm font-bold text-muted-foreground mb-8">
-                                                <div className="flex items-center gap-2 group/icon">
-                                                    <div className="p-1.5 rounded-lg bg-primary/5 text-primary group-hover/icon:bg-primary group-hover/icon:text-white transition-colors">
-                                                        <Clock className="h-4 w-4" />
-                                                    </div>
+                                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+                                                <span className="flex items-center gap-1">
+                                                    <Clock className="h-3.5 w-3.5" />
                                                     {recipe.timing?.total || (recipe.timing?.prep || 0) + (recipe.timing?.cook || 0) || 15} min
-                                                </div>
-                                                <div className="flex items-center gap-2 group/icon">
-                                                    <div className="p-1.5 rounded-lg bg-primary/5 text-primary group-hover/icon:bg-primary group-hover/icon:text-white transition-colors">
-                                                        <Flame className="h-4 w-4" />
-                                                    </div>
-                                                    {recipe.steps.length} steps
-                                                </div>
+                                                </span>
+                                                <span>{recipe.steps.length} steps</span>
                                             </div>
 
                                             {recipe.techniques && recipe.techniques.length > 0 && (
-                                                <div className="flex flex-wrap gap-2 pt-6 border-t border-border/50">
+                                                <div className="flex flex-wrap gap-1 pt-3 border-t">
                                                     {recipe.techniques.slice(0, 3).map((technique, idx) => (
-                                                        <Badge key={idx} variant="secondary" className="text-[9px] uppercase tracking-[0.1em] bg-primary/5 text-primary border-none font-black px-2.5 py-1">
+                                                        <Badge key={idx} variant="secondary" className="text-xs">
                                                             {technique}
                                                         </Badge>
                                                     ))}
                                                     {recipe.techniques.length > 3 && (
-                                                        <span className="text-[10px] text-muted-foreground font-black bg-muted px-2 py-0.5 rounded-md">
+                                                        <span className="text-xs text-muted-foreground">
                                                             +{recipe.techniques.length - 3}
                                                         </span>
                                                     )}

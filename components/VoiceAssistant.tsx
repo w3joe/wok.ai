@@ -5,19 +5,31 @@ import { useConversation } from '@elevenlabs/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Volume2, VolumeX, Loader2, Mic, Sparkles, MessageSquare, HelpCircle, FastForward, Rewind, RotateCcw } from 'lucide-react'
+import { Volume2, VolumeX, Loader2, Mic, HelpCircle, FastForward, Rewind, RotateCcw } from 'lucide-react'
+
+interface RecipeStep {
+  instruction: string
+  description: string
+}
 
 interface Recipe {
   id: string
   title: string
   ingredients: string[]
-  steps: string[]
+  steps: (string | RecipeStep)[]
   timing?: {
     prep?: number
     cook?: number
     total?: number
   }
   techniques?: string[]
+}
+
+function getStepText(step: string | RecipeStep): string {
+  if (typeof step === 'string') {
+    return step
+  }
+  return `${step.instruction}. ${step.description}`
 }
 
 interface VoiceAssistantProps {
@@ -33,14 +45,12 @@ export function VoiceAssistant({ recipe, currentStep, completedSteps, onStepChan
   const [transcript, setTranscript] = useState<string>('')
   const [agentResponse, setAgentResponse] = useState<string>('')
 
-  // Refs to track state without triggering re-renders of the hook
   const lastChangeSource = useRef<'user' | 'agent'>('user')
   const currentStepRef = useRef(currentStep)
   const onStepChangeRef = useRef(onStepChange)
   const onTimerRequestRef = useRef(onTimerRequest)
   const recipeRef = useRef(recipe)
 
-  // Keep refs in sync with props
   useEffect(() => {
     onStepChangeRef.current = onStepChange
     onTimerRequestRef.current = onTimerRequest
@@ -48,7 +58,6 @@ export function VoiceAssistant({ recipe, currentStep, completedSteps, onStepChan
     currentStepRef.current = currentStep
   }, [currentStep, onStepChange, onTimerRequest, recipe])
 
-  // Define client tools that the agent can call
   const clientTools = useMemo(() => ({
     nextStep: () => {
       lastChangeSource.current = 'agent'
@@ -58,7 +67,7 @@ export function VoiceAssistant({ recipe, currentStep, completedSteps, onStepChan
       if (step < r.steps.length - 1) {
         const nextIndex = step + 1
         onStepChangeRef.current(nextIndex)
-        return `Moved to step ${nextIndex + 1}. The instruction is: ${r.steps[nextIndex]}`
+        return `Moved to step ${nextIndex + 1}. The instruction is: ${getStepText(r.steps[nextIndex])}`
       }
       return 'Already at the last step'
     },
@@ -70,7 +79,7 @@ export function VoiceAssistant({ recipe, currentStep, completedSteps, onStepChan
       if (step > 0) {
         const prevIndex = step - 1
         onStepChangeRef.current(prevIndex)
-        return `Moved to step ${prevIndex + 1}. The instruction is: ${r.steps[prevIndex]}`
+        return `Moved to step ${prevIndex + 1}. The instruction is: ${getStepText(r.steps[prevIndex])}`
       }
       return 'Already at the first step'
     },
@@ -78,7 +87,7 @@ export function VoiceAssistant({ recipe, currentStep, completedSteps, onStepChan
       const step = currentStepRef.current
       const r = recipeRef.current
       onStepChangeRef.current(step)
-      return `Current step ${step + 1}: ${r.steps[step]}`
+      return `Current step ${step + 1}: ${getStepText(r.steps[step])}`
     },
     setTimer: ({ minutes }: { minutes: number }) => {
       onTimerRequestRef.current(minutes, `Step ${currentStepRef.current + 1}`)
@@ -102,16 +111,15 @@ export function VoiceAssistant({ recipe, currentStep, completedSteps, onStepChan
 
       if (targetIndex >= 0 && targetIndex < r.steps.length) {
         onStepChangeRef.current(targetIndex)
-        return `Moved to step ${stepNum}. The instruction is: ${r.steps[targetIndex]}`
+        return `Moved to step ${stepNum}. The instruction is: ${getStepText(r.steps[targetIndex])}`
       }
       return `Step ${stepNum} does not exist.`
     },
   }), [])
 
-  // Prompt configuration
   const recipePrompt = useMemo(() => {
     const ingredientsList = recipe.ingredients.map((ing, i) => `${i + 1}. ${ing}`).join('\n')
-    const stepsList = recipe.steps.map((step, i) => `Step ${i + 1}: ${step}`).join('\n')
+    const stepsList = recipe.steps.map((step, i) => `Step ${i + 1}: ${getStepText(step)}`).join('\n')
 
     return `You are helping the user cook "${recipe.title}".
 
@@ -126,12 +134,22 @@ ${stepsList}
 - Use "changeStep" to update the UI when the user moves between steps.
 - Answer questions about ingredients and steps.
 
+## How to Read Steps:
+When reading or summarizing a step, always:
+1. State the MAIN ACTION VERB clearly (e.g., "sauté", "chop", "simmer", "fold")
+2. Mention the KEY INGREDIENTS involved in that step
+3. Include any TIMING information (e.g., "for 2 minutes", "until golden")
+4. Share the chef's TIPS and sensory cues from the description (e.g., "you'll know it's ready when it starts to sizzle")
+5. Keep it conversational but informative - summarize, don't just read verbatim
+
+Example: Instead of reading "Add garlic to pan. Cook until fragrant about 30 seconds, be careful not to burn it."
+Say: "Now we're going to SAUTÉ the GARLIC - add it to your pan and cook for about 30 SECONDS until it becomes fragrant. The chef's tip here is to watch it carefully so it doesn't burn!"
+
 ## Tools:
 - repeatStep(): Read current step again
 - jumpToStep({ step: number }): Move to a specific step number.`
   }, [recipe.title, recipe.ingredients, recipe.steps])
 
-  // Memoize callbacks to prevent useConversation from reconnecting on every render
   const handleConnect = useCallback(() => {
     console.log('Voice assistant connected')
     setError(null)
@@ -168,12 +186,10 @@ ${stepsList}
   const startConversation = async () => {
     try {
       setError(null)
-      // Get signed URL
       const response = await fetch('/api/conversation/signed-url')
       if (!response.ok) throw new Error('Could not get signed URL')
       const { signedUrl } = await response.json()
 
-      // Start session with overrides
       await conversation.startSession({
         signedUrl,
         overrides: {
@@ -201,8 +217,6 @@ ${stepsList}
   const isConnecting = conversation.status === 'connecting'
   const isSpeaking = conversation.isSpeaking
 
-  // Update effect for manual step changes
-  // Store conversation in a ref to avoid dependency issues
   const conversationRef = useRef(conversation)
   useEffect(() => {
     conversationRef.current = conversation
@@ -210,105 +224,97 @@ ${stepsList}
 
   useEffect(() => {
     if (isActive && lastChangeSource.current === 'user') {
-      // Use ref to avoid triggering effect when conversation object changes
-      conversationRef.current.sendUserMessage(`SYSTEM: User moved to step ${currentStep + 1}. Read this step: ${recipe.steps[currentStep]}`)
+      conversationRef.current.sendUserMessage(`SYSTEM: User moved to step ${currentStep + 1}. Read this step: ${getStepText(recipe.steps[currentStep])}`)
     }
     lastChangeSource.current = 'user'
   }, [currentStep, isActive, recipe.steps])
 
   return (
     <div data-assistant-active={isActive}>
-      <Card className={`rounded-[2rem] overflow-hidden border-2 transition-all duration-500 shadow-lg ${isActive ? 'border-primary shadow-primary/20 bg-primary/5' : 'border-border/50 bg-white dark:bg-card'}`}>
-        <CardContent className="p-8">
-          <div className="flex items-center justify-between mb-8">
+      <Card className={`transition-colors ${isActive ? 'border-primary' : ''}`}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-xl transition-colors ${isActive ? 'bg-primary text-white scale-110 shadow-lg shadow-primary/30' : 'bg-muted text-muted-foreground'}`}>
-                <Mic className={`h-6 w-6 ${isActive && isSpeaking ? 'animate-pulse' : ''}`} />
+              <div className={`p-2 rounded-lg ${isActive ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                <Mic className={`h-5 w-5 ${isActive && isSpeaking ? 'animate-pulse' : ''}`} />
               </div>
               <div>
-                <h3 className="text-xl font-black">AI Voice Assistant</h3>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-0.5">Hands-free Cooking</p>
+                <h3 className="font-semibold">Voice Assistant</h3>
+                <p className="text-xs text-muted-foreground">Hands-free cooking</p>
               </div>
             </div>
             {isActive && (
-              <Badge variant="default" className={`bg-primary text-white border-none px-4 py-1.5 font-black uppercase tracking-widest text-[10px] rounded-full ${isSpeaking ? 'animate-pulse' : ''}`}>
-                {isSpeaking ? 'Agent Speaking' : 'Listening...'}
+              <Badge variant={isSpeaking ? 'default' : 'secondary'}>
+                {isSpeaking ? 'Speaking' : 'Listening'}
               </Badge>
             )}
           </div>
 
-          <div className="flex flex-col gap-6">
+          <div className="space-y-4">
             <Button
               onClick={toggleConversation}
               disabled={isConnecting}
-              size="lg"
-              className={`w-full rounded-2xl h-16 text-xl font-bold shadow-xl transition-all active:scale-95 ${isActive ? "bg-white text-destructive border-2 border-destructive/20 hover:bg-destructive/5 shadow-destructive/10" : "bg-primary text-white shadow-primary/30"}`}
+              className="w-full"
               variant={isActive ? "outline" : "default"}
             >
               {isConnecting ? (
                 <>
-                  <Loader2 className="mr-3 h-6 w-6 animate-spin" />
-                  Establishing Link...
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connecting...
                 </>
               ) : isActive ? (
                 <>
-                  <VolumeX className="mr-3 h-6 w-6" />
-                  Deactivate AI
+                  <VolumeX className="mr-2 h-4 w-4" />
+                  Stop Assistant
                 </>
               ) : (
                 <>
-                  <Volume2 className="mr-3 h-6 w-6" />
-                  Activate AI Guide
+                  <Volume2 className="mr-2 h-4 w-4" />
+                  Start Assistant
                 </>
               )}
             </Button>
 
             {error && (
-              <div className="p-4 bg-destructive/10 rounded-2xl border-2 border-destructive/20 animate-in fade-in slide-in-from-top-2">
-                <p className="text-sm text-destructive font-bold">
-                  Error: {error}
-                </p>
+              <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
+                <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
             {(transcript || agentResponse) && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 transition-all duration-700">
+              <div className="space-y-3">
                 {transcript && (
-                  <div className="flex gap-3 items-start justify-end">
-                    <div className="p-4 bg-white/80 dark:bg-background/80 rounded-[1.5rem] rounded-tr-none shadow-sm border border-border/50 max-w-[85%]">
-                      <p className="text-xs text-muted-foreground font-black uppercase tracking-tighter mb-1.5 flex items-center gap-1.5">
-                        <MessageSquare className="h-3 w-3" /> You
-                      </p>
-                      <p className="text-sm font-medium italic">&quot;{transcript}&quot;</p>
+                  <div className="flex justify-end">
+                    <div className="p-3 bg-muted rounded-lg max-w-[85%]">
+                      <p className="text-xs text-muted-foreground mb-1">You</p>
+                      <p className="text-sm">"{transcript}"</p>
                     </div>
                   </div>
                 )}
 
                 {agentResponse && (
-                  <div className="flex gap-3 items-start">
-                    <div className="p-4 bg-primary text-white rounded-[1.5rem] rounded-tl-none shadow-lg shadow-primary/20 max-w-[85%]">
-                      <p className="text-xs text-white/60 font-black uppercase tracking-tighter mb-1.5 flex items-center gap-1.5">
-                        <Sparkles className="h-3 w-3 fill-white/20" /> Assistant
-                      </p>
-                      <p className="text-sm font-bold leading-relaxed">{agentResponse}</p>
+                  <div className="flex justify-start">
+                    <div className="p-3 bg-primary text-primary-foreground rounded-lg max-w-[85%]">
+                      <p className="text-xs opacity-70 mb-1">Assistant</p>
+                      <p className="text-sm">{agentResponse}</p>
                     </div>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="border-t border-border/50 pt-6">
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.2em] mb-4 text-center">Voice Command Guide</p>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="border-t pt-4">
+              <p className="text-xs text-muted-foreground mb-3">Voice commands</p>
+              <div className="grid grid-cols-2 gap-2">
                 {[
-                  { icon: <FastForward className="h-3.5 w-3.5" />, label: "Next Step" },
-                  { icon: <Rewind className="h-3.5 w-3.5" />, label: "Go Back" },
-                  { icon: <RotateCcw className="h-3.5 w-3.5" />, label: "Repeat Step" },
-                  { icon: <HelpCircle className="h-3.5 w-3.5" />, label: "Any Question" },
+                  { icon: <FastForward className="h-3 w-3" />, label: "Next Step" },
+                  { icon: <Rewind className="h-3 w-3" />, label: "Go Back" },
+                  { icon: <RotateCcw className="h-3 w-3" />, label: "Repeat" },
+                  { icon: <HelpCircle className="h-3 w-3" />, label: "Ask Question" },
                 ].map((cmd, i) => (
-                  <div key={i} className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/50 dark:bg-card/50 border border-border/50 transition-colors hover:bg-white dark:hover:bg-card">
-                    <div className="text-primary">{cmd.icon}</div>
-                    <span className="text-xs font-bold">{cmd.label}</span>
+                  <div key={i} className="flex items-center gap-2 p-2 rounded bg-muted/50 text-xs">
+                    {cmd.icon}
+                    <span>{cmd.label}</span>
                   </div>
                 ))}
               </div>
