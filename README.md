@@ -15,6 +15,7 @@ A Next.js application that allows chefs to record recipes using voice and enable
 
 ### 🗣️ Feature 2: Voice Assistant for Cooking
 - Hands-free voice navigation through recipe steps
+- **Smart Interruption**: Automatically stops speaking when you interact with the UI
 - Voice commands: "next step", "previous step", "repeat that"
 - Voice-activated timer setting
 - Multiple simultaneous timers with alerts
@@ -22,6 +23,10 @@ A Next.js application that allows chefs to record recipes using voice and enable
 - Real-time step-by-step guidance
 - **WebRTC support** for ultra-low latency (~100-200ms)
 - **Client tools** for seamless UI integration
+
+### ✏️ Feature 3: Recipe Management
+- **Recipe Editing**: Full editing capabilities for existing recipes\
+- **Recipe Library**: Dedicated page for browsing and sorting recipes
 
 ## Tech Stack
 
@@ -55,10 +60,8 @@ pnpm install
    - Go to [ElevenLabs Agents Dashboard](https://elevenlabs.io/app/agents)
    - Create a new agent
    - Configure client tools (see `SETUP_CHECKLIST.md` for details):
-     - `nextStep` - Move to next recipe step
-     - `previousStep` - Go back to previous step
-     - `repeatStep` - Repeat current step
-     - `setTimer` - Set a timer (parameter: `minutes` as number)
+     - `changeStep` - Move to a specific step number
+     - `setTimer` - Set a cooking timer (parameter: `minutes` as number)
    - Save your agent and copy the agent ID
 
 ### 4. Set Up Google Gemini
@@ -116,6 +119,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
    - Say "set timer for X minutes" to start a timer
    - Ask questions about techniques or ingredients
 
+### Editing a Recipe
+
+1. Navigate to the recipe you want to edit
+2. Click the "Edit Recipe" button (pencil icon)
+3. Modify ingredients, steps, or details
+4. Drag and drop steps to reorder them
+5. Click "Save Changes" to update
+
 ## Project Structure
 
 ```
@@ -127,12 +138,15 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
     /conversation       # Voice assistant config
   /record              # Chef recording page
   /cook/[id]           # Voice assistant cooking page
-  page.tsx             # Home page with recipe library
+  /edit/[id]           # Recipe editing page
+  /recipes             # Recipe library page
+  page.tsx             # Home page
 
 /components
   /ui                  # shadcn/ui components
-  VoiceRecorder.tsx    # Recording component
+  VoiceRecorder.tsx    # Recording component with dynamic UI
   RecipeReview.tsx     # Recipe review component
+  RecipeEditor.tsx     # Recipe editing component
   VoiceAssistant.tsx   # Voice assistant component
   TimerDisplay.tsx     # Timer management component
 
@@ -181,8 +195,6 @@ The voice assistant now uses the official ElevenLabs React SDK with:
 ## Future Enhancements
 
 - User authentication and private recipes
-- Recipe editing after publication
-- Recipe search and filtering
 - Social features (ratings, comments)
 - Recipe collections and meal planning
 - Integration with smart kitchen devices

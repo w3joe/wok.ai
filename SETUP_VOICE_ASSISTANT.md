@@ -30,39 +30,33 @@ pnpm install
 
 ### Configure Client Tools
 
-Add these four client tools in the ElevenLabs UI:
+Add these four client tools in the ElevenLabs UI, copying the settings for each tool from agentTools/[toolName].json
 
-#### Tool 1: nextStep
-- **Name:** `nextStep`
-- **Description:** Move to the next cooking step
-- **Parameters:** None
+#### Tool 1: changeStep
+- **Name:** `changeStep`
+- **Json File:** agentTools/changeStep.json
 
-#### Tool 2: previousStep
-- **Name:** `previousStep`
-- **Description:** Go back to the previous cooking step
-- **Parameters:** None
-
-#### Tool 3: repeatStep
-- **Name:** `repeatStep`
-- **Description:** Repeat the current cooking step
-- **Parameters:** None
-
-#### Tool 4: setTimer
+#### Tool 2: setTimer
 - **Name:** `setTimer`
-- **Description:** Set a cooking timer for a specified number of minutes
-- **Parameters:**
-  - `minutes` (number, required) - Number of minutes for the timer
+- **Json File:** agentTools/setTimer.json
+
+### Configure Security Settings
+
+#### Allow overrides for:
+ - **First Message**
+ - **System Prompt**
 
 ### System Prompt (Optional)
 
 You can add a system prompt to guide the agent:
 
 ```
-You are a helpful cooking assistant. When users ask you to:
-- Move forward in the recipe → Call the nextStep tool
-- Go back → Call the previousStep tool
-- Repeat instructions → Call the repeatStep tool
-- Set a timer → Call the setTimer tool with the minutes parameter
+
+You are a helpful cooking assistant. 
+Your role is to:
+- Help the user cook recipes.
+- Use "changeStep" to update the UI when the user moves between steps.
+- Answer questions about ingredients and steps.
 
 For other questions, provide helpful cooking advice based on the recipe context you receive.
 Be encouraging, concise, and supportive since the user is actively cooking.
@@ -124,7 +118,7 @@ pnpm dev
 
 ### Client tools not working
 - Verify tool names in ElevenLabs UI match exactly:
-  - `nextStep`, `previousStep`, `repeatStep`, `setTimer`
+  - `changeStep`, `setTimer`
 - Ensure `setTimer` has a `minutes` parameter of type `number`
 - Check the agent's system prompt guides it to use tools
 
@@ -133,8 +127,6 @@ pnpm dev
 - [ ] Voice assistant button appears on cook page
 - [ ] Clicking button requests microphone permission
 - [ ] Connection status shows "Listening" when active
-- [ ] Saying "next step" advances to next step
-- [ ] Saying "previous step" goes back
 - [ ] Saying "set timer for 5 minutes" creates a timer
 - [ ] Asking questions gets voice responses
 - [ ] Transcripts appear in the UI
