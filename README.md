@@ -6,8 +6,6 @@ A Next.js application that allows chefs to record recipes using voice and enable
 
 ## Features
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/iDA4Qlo9CUk?si=f9h6L6NiAO_FK_T2" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
 ### 🎙️ Feature 1: Chef Recipe Recording
 - Voice recording of cooking process
 - Real-time speech-to-text transcription using ElevenLabs
