@@ -1,0 +1,29 @@
+{
+    "type": "client",
+    "name": "changeStep",
+    "description": "Use this tool whenever there is a change in steps. ",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": false,
+    "response_timeout_secs": 1,
+    "parameters": [
+        {
+            "id": "stepNumber",
+            "type": "integer",
+            "value_type": "llm_prompt",
+            "description": "This is the new step number that the LLM has moved to",
+            "dynamic_variable": "",
+            "constant_value": "",
+            "enum": null,
+            "is_system_provided": false,
+            "required": true
+        }
+    ],
+    "dynamic_variables": {
+        "dynamic_variable_placeholders": {}
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "type": "client",
+    "name": "setTimer",
+    "description": "Set a cooking timer for a specified number of minutes",
+    "disable_interruptions": false,
+    "force_pre_tool_speech": "auto",
+    "assignments": [],
+    "tool_call_sound": null,
+    "tool_call_sound_behavior": "auto",
+    "execution_mode": "immediate",
+    "expects_response": false,
+    "response_timeout_secs": 1,
+    "parameters": [
+        {
+            "id": "minutes",
+            "type": "number",
+            "value_type": "llm_prompt",
+            "description": "Number of minutes for the timer",
+            "dynamic_variable": "",
+            "constant_value": "",
+            "enum": null,
+            "is_system_provided": false,
+            "required": true
+        }
+    ],
+    "dynamic_variables": {
+        "dynamic_variable_placeholders": {}
+    }
+}
