@@ -122,3 +122,44 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .glass {
+    @apply bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl;
+  }
+  
+  .glass-card {
+    @apply bg-white/60 dark:bg-card/60 backdrop-blur-lg border border-white/30 dark:border-white/10 shadow-2xl;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(var(--primary), 0.3);
+  }
+
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+  
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+}

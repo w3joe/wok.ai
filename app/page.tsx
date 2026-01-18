@@ -19,6 +19,7 @@ import {
   Video
 } from 'lucide-react'
 import { Header } from '@/components/Header'
+import { DecorativeWok } from '@/components/DecorativeWok'
 
 interface Recipe {
   id: string
@@ -59,39 +60,51 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#fafafa] dark:bg-background">
       <Header />
 
-      <main>
+      <main className="relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] animate-blob" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[35%] h-[35%] bg-primary/20 rounded-full blur-[100px] animate-blob animation-delay-2000" />
+          <div className="absolute top-[20%] right-[10%] w-[25%] h-[25%] bg-primary/15 rounded-full blur-[80px] animate-blob animation-delay-4000" />
+        </div>
+
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-white dark:bg-card border-b pt-20 pb-24 md:pt-32 md:pb-40">
-          {/* Abstract Background Elements */}
-          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl opacity-50" />
-          <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-3xl opacity-30" />
+        <section className="relative pt-20 pb-24 md:pt-32 md:pb-40">
 
           <div className="container mx-auto px-4 relative">
-            <div className="max-w-4xl mx-auto text-center">
-              <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm font-semibold text-primary border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <Sparkles className="mr-2 h-4 w-4" />
-                AI-Powered Culinary Experience
-              </Badge>
-              <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-6 duration-1000">
-                Cook with Your <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Voice</span>, Not Your Hands.
-              </h1>
-              <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000">
-                Wok.AI transforms your spoken recipes into structured culinary masterpieces. Record, organize, and cook with hands-free guidance.
-              </p>
+            <div className="grid lg:grid-cols-2 gap-12 items-center max-w-6xl mx-auto text-left">
+              <div className="space-y-8">
+                <div>
+                  <Badge variant="outline" className="mb-6 px-4 py-1.5 text-sm font-semibold text-primary border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    AI-Powered Culinary Experience
+                  </Badge>
+                  <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-6 duration-1000">
+                    Cook with Your <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Voice</span>, Not Your Hands.
+                  </h1>
+                  <p className="text-xl text-muted-foreground mb-12 max-w-2xl leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    Wok.AI transforms your spoken recipes into structured culinary masterpieces. Record, organize, and cook with hands-free guidance.
+                  </p>
+                </div>
 
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                <Link href="/record">
-                  <Button size="lg" className="rounded-full h-14 px-8 text-lg font-bold shadow-xl shadow-primary/25 hover:scale-105 transition-all">
-                    <Mic className="mr-2 h-5 w-5" />
-                    Start Recording
-                  </Button>
-                </Link>
-                <Link href="/recipes">
-                  <Button size="lg" variant="outline" className="rounded-full h-14 px-8 text-lg font-bold bg-white/50 backdrop-blur-sm hover:bg-white hover:scale-105 transition-all">
-                    View Library
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
+                <div className="flex flex-col sm:flex-row items-center justify-start gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+                  <Link href="/record">
+                    <Button size="lg" className="rounded-full h-14 px-8 text-lg font-bold shadow-xl shadow-primary/25 hover:scale-105 transition-all w-full sm:w-auto">
+                      <Mic className="mr-2 h-5 w-5" />
+                      Start Recording
+                    </Button>
+                  </Link>
+                  <Link href="/recipes">
+                    <Button size="lg" variant="outline" className="rounded-full h-14 px-8 text-lg font-bold bg-white/50 backdrop-blur-sm hover:bg-white hover:scale-105 transition-all w-full sm:w-auto">
+                      View Library
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="hidden lg:block animate-in fade-in zoom-in duration-1000">
+                <DecorativeWok />
               </div>
             </div>
           </div>
@@ -101,7 +114,7 @@ export default function HomePage() {
           <div className="max-w-6xl mx-auto">
             {/* Features Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-32">
-              <Card className="group hover:shadow-2xl transition-all duration-500 border-border/50 rounded-3xl overflow-hidden bg-white dark:bg-card">
+              <Card className="group hover:shadow-2xl transition-all duration-500 border-border/50 rounded-[2rem] overflow-hidden glass-card">
                 <CardHeader className="pb-2 text-center pt-10">
                   <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500">
                     <Mic className="h-8 w-8" />
@@ -120,7 +133,7 @@ export default function HomePage() {
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-2xl transition-all duration-500 border-border/50 rounded-3xl overflow-hidden bg-white dark:bg-card relative ring-2 ring-primary/20">
+              <Card className="group hover:shadow-2xl transition-all duration-500 border-border/50 rounded-[2rem] overflow-hidden glass-card relative ring-2 ring-primary/20">
                 <div className="absolute top-4 right-4 focus-visible:ring">
                   <Badge className="bg-primary text-primary-foreground">Popular</Badge>
                 </div>
@@ -142,7 +155,7 @@ export default function HomePage() {
                 </CardContent>
               </Card>
 
-              <Card className="group hover:shadow-2xl transition-all duration-500 border-border/50 rounded-3xl overflow-hidden bg-white dark:bg-card">
+              <Card className="group hover:shadow-2xl transition-all duration-500 border-border/50 rounded-[2rem] overflow-hidden glass-card">
                 <CardHeader className="pb-2 text-center pt-10">
                   <div className="h-16 w-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500">
                     <BookOpen className="h-8 w-8" />
@@ -206,14 +219,14 @@ export default function HomePage() {
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {recipes.map((recipe) => (
                     <Link key={recipe.id} href={`/cook/${recipe.id}`}>
-                      <Card className="group h-full overflow-hidden border-border/50 hover:border-primary/50 hover:shadow-2xl transition-all duration-500 cursor-pointer rounded-3xl bg-white dark:bg-card">
-                        <div className="h-48 w-full bg-gradient-to-br from-primary/10 via-transparent to-primary/5 relative overflow-hidden">
+                      <Card className="group h-full overflow-hidden border-border/50 hover:border-primary/50 hover:shadow-2xl transition-all duration-500 cursor-pointer rounded-[2rem] glass-card">
+                        <div className="h-48 w-full bg-gradient-to-br from-primary/20 via-primary/5 to-transparent relative overflow-hidden">
                           <div className="absolute inset-0 flex items-center justify-center group-hover:scale-110 transition-transform duration-700">
-                            <ChefHat className="h-24 w-24 text-primary/20" />
+                            <ChefHat className="h-24 w-24 text-primary/10" />
                           </div>
                           <div className="absolute bottom-4 left-4">
                             {recipe.timing && (
-                              <Badge className="bg-white/90 dark:bg-black/80 backdrop-blur-sm text-foreground border-none font-bold shadow-sm">
+                              <Badge className="bg-white/40 dark:bg-black/40 backdrop-blur-md text-foreground border border-white/20 font-bold shadow-sm">
                                 <Clock className="mr-1.5 h-3.5 w-3.5 text-primary" />
                                 {recipe.timing.total || (recipe.timing.prep || 0) + (recipe.timing.cook || 0)} min
                               </Badge>
@@ -226,7 +239,7 @@ export default function HomePage() {
                           </CardTitle>
                           <div className="flex flex-wrap gap-2 mt-4">
                             {recipe.techniques?.slice(0, 2).map((tech, i) => (
-                              <Badge key={i} variant="secondary" className="bg-primary/5 text-primary text-[10px] uppercase font-black tracking-widest px-2.5">
+                              <Badge key={i} variant="secondary" className="bg-primary/10 text-primary text-[10px] uppercase font-black tracking-widest px-2.5">
                                 {tech}
                               </Badge>
                             ))}
