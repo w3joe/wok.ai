@@ -84,7 +84,7 @@ export function VoiceAssistant({ recipe, currentStep, completedSteps, onStepChan
       onTimerRequestRef.current(minutes, `Step ${currentStepRef.current + 1}`)
       return `Timer set for ${minutes} minutes`
     },
-    jumpToStep: (args: any) => {
+    changeStep: (args: any) => {
       let rawStep: any = undefined
       if (typeof args === 'number' || typeof args === 'string') {
         rawStep = args
@@ -128,7 +128,7 @@ ${stepsList}
 
 ## Tools:
 - repeatStep(): Read current step again
-- jumpToStep({ step: number }): Move to a specific step number.`
+- changeStep({ step: number }): Move to a specific step number.`
   }, [recipe.title, recipe.ingredients, recipe.steps])
 
   // Memoize callbacks to prevent useConversation from reconnecting on every render
