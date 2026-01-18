@@ -17,10 +17,18 @@ import {
     ArrowUpDown,
     Sparkles,
     Utensils,
-    Flame
+    Flame,
+    ChevronDown
 } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { RecipeCardSkeleton } from '@/components/RecipeCardSkeleton'
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface Recipe {
     id: string
@@ -184,15 +192,27 @@ export default function RecipesPage() {
                                 <ArrowUpDown className="h-3.5 w-3.5 text-primary" />
                                 Sort By
                             </span>
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value as any)}
-                                className="bg-transparent text-sm border-none focus:ring-0 cursor-pointer font-bold text-foreground uppercase tracking-wider"
-                            >
-                                <option value="newest">Newest First</option>
-                                <option value="alphabetical">Title A-Z</option>
-                                <option value="time">Cooking Time</option>
-                            </select>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-auto p-0 font-bold text-foreground uppercase tracking-wider text-sm hover:bg-transparent flex items-center focus-visible:ring-0">
+                                        {sortBy === 'newest' ? 'Newest First' : sortBy === 'alphabetical' ? 'Title A-Z' : 'Cooking Time'}
+                                        <ChevronDown className="ml-2 h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="rounded-2xl border-2 border-border/50 shadow-2xl p-2 min-w-[200px] animate-in slide-in-from-top-2 duration-200">
+                                    <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
+                                        <DropdownMenuRadioItem value="newest" className="rounded-xl font-bold uppercase tracking-wider text-[10px] py-4 px-4 cursor-pointer focus:bg-primary/5 focus:text-primary data-[state=checked]:text-primary data-[state=checked]:bg-primary/5 transition-all">
+                                            Newest First
+                                        </DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="alphabetical" className="rounded-xl font-bold uppercase tracking-wider text-[10px] py-4 px-4 cursor-pointer focus:bg-primary/5 focus:text-primary data-[state=checked]:text-primary data-[state=checked]:bg-primary/5 transition-all">
+                                            Title A-Z
+                                        </DropdownMenuRadioItem>
+                                        <DropdownMenuRadioItem value="time" className="rounded-xl font-bold uppercase tracking-wider text-[10px] py-4 px-4 cursor-pointer focus:bg-primary/5 focus:text-primary data-[state=checked]:text-primary data-[state=checked]:bg-primary/5 transition-all">
+                                            Cooking Time
+                                        </DropdownMenuRadioItem>
+                                    </DropdownMenuRadioGroup>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
 

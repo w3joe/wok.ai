@@ -87,7 +87,7 @@ export default function HomePage() {
                   </Button>
                 </Link>
                 <Link href="/recipes">
-                  <Button size="lg" variant="outline" className="rounded-full h-14 px-8 text-lg font-bold bg-white/50 backdrop-blur-sm hover:bg-white transition-all">
+                  <Button size="lg" variant="outline" className="rounded-full h-14 px-8 text-lg font-bold bg-white/50 backdrop-blur-sm hover:bg-white hover:scale-105 transition-all">
                     View Library
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
