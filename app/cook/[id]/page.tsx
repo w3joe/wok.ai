@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { VoiceAssistant } from '@/components/VoiceAssistant'
 import { TimerDisplay } from '@/components/TimerDisplay'
 import { TimerManager, Timer } from '@/lib/timer-manager'
-import { ChefHat, ChevronLeft, ChevronRight, Clock, Check } from 'lucide-react'
+import { ChefHat, ChevronLeft, ChevronRight, Clock, Check, Pencil } from 'lucide-react'
 import { Header } from '@/components/Header'
 
 interface Recipe {
@@ -152,19 +152,27 @@ export default function CookPage({ params }: { params: Promise<{ id: string }> }
       <Header />
 
       <main className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4">{recipe.title}</h1>
-          <div className="flex gap-2">
-            {recipe.timing && (
+        <div className="mb-8 flex flex-col md:flex-row md:items-start justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold mb-4">{recipe.title}</h1>
+            <div className="flex gap-2">
+              {recipe.timing && (
+                <Badge variant="secondary">
+                  <Clock className="mr-1 h-3 w-3" />
+                  {recipe.timing.total || (recipe.timing.prep || 0) + (recipe.timing.cook || 0)} min
+                </Badge>
+              )}
               <Badge variant="secondary">
-                <Clock className="mr-1 h-3 w-3" />
-                {recipe.timing.total || (recipe.timing.prep || 0) + (recipe.timing.cook || 0)} min
+                {recipe.steps.length} steps
               </Badge>
-            )}
-            <Badge variant="secondary">
-              {recipe.steps.length} steps
-            </Badge>
+            </div>
           </div>
+          <Link href={`/edit/${recipe.id}`}>
+            <Button variant="outline" className="gap-2">
+              <Pencil className="h-4 w-4" />
+              Edit Recipe
+            </Button>
+          </Link>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
